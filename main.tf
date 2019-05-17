@@ -19,6 +19,8 @@ resource "aws_vpc" "main" {
         environment = {
             AWS_ACCESS_KEY_ID = "${var.aws-access-key-id}"
             AWS_SECRET_ACCESS_KEY = "${var.aws-secret-access-key}"
+            AWS_REGION = "${var.region}"
+            AWS_DEFAULT_REGION = "${var.region}"
         }
     }
 }
