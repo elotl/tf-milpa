@@ -2,6 +2,14 @@ provider "aws" {
   region     = "${var.region}"
 }
 
+data "http" "my-ip-address" {
+   url = "http://icanhazip.com"
+}
+
+locals {
+  my-cidr = "${chomp(data.http.my-ip-address.body)}/32"
+}
+
 resource "aws_vpc" "main" {
     cidr_block = "10.0.0.0/16"
     enable_dns_hostnames = true
@@ -82,7 +90,7 @@ resource "aws_security_group" "milpa-server" {
       from_port = 22
       to_port = 22
       protocol = "tcp"
-      cidr_blocks = ["0.0.0.0/0"]
+      cidr_blocks = ["${local.my-cidr}"]
   }
 
   ingress {
