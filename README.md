@@ -7,9 +7,12 @@ This is a Terraform configuration for provisioning a simple (one server, embedde
 Create a file at `~/env.tfvars`:
 
     cluster-name = "my-cluster-name"
-    aws-access-key-id = "my-access-key"
-    aws-secret-access-key = "my-secret-key"
     ssh-key-name = "my-ssh-key-on-EC2"
+    # The access keys can be empty, since an IAM policy and role are created
+    # for Milpa. If they are not empty here, Milpa will use them instead of
+    # IAM.
+    aws-access-key-id = ""
+    aws-secret-access-key = ""
     # Get your license at https://www.elotl.co/trial.
     license-key = ""
     license-id = ""
