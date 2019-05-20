@@ -7,7 +7,7 @@ resource "aws_vpc" "main" {
     enable_dns_hostnames = true
 
     tags {
-        Name = "milpa-vpc"
+        Name = "${var.namespace}-${var.stage}-milpa-vpc"
     }
 
     provisioner "local-exec" {
@@ -27,7 +27,7 @@ resource "aws_internet_gateway" "gw" {
     vpc_id = "${aws_vpc.main.id}"
 
     tags {
-        Name = "milpa-gw"
+        Name = "${var.namespace}-${var.stage}-milpa-gw"
     }
 
     provisioner "local-exec" {
@@ -53,7 +53,7 @@ resource "aws_route_table" "route-table" {
     depends_on = ["aws_internet_gateway.gw"]
 
     tags {
-        Name = "milpa-route-table"
+        Name = "${var.namespace}-${var.stage}-milpa-route-table"
     }
 }
 
@@ -69,12 +69,12 @@ resource "aws_subnet" "public" {
     map_public_ip_on_launch = true
 
     tags {
-        Name = "milpa-subnet"
+        Name = "${var.namespace}-${var.stage}-milpa-subnet"
     }
 }
 
 resource "aws_security_group" "milpa-server" {
-  name = "milpa-server"
+  name = "${var.namespace}-${var.stage}-milpa-server"
   description = "Milpa server security group"
   vpc_id = "${aws_vpc.main.id}"
 
@@ -101,12 +101,12 @@ resource "aws_security_group" "milpa-server" {
   }
 
   tags {
-    Name = "milpa-server"
+    Name = "${var.namespace}-${var.stage}-milpa-server"
   }
 }
 
 resource "aws_iam_role" "milpa" {
-  name = "milpa"
+  name = "${var.namespace}-${var.stage}-milpa"
   assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -124,7 +124,7 @@ EOF
 }
 
 resource "aws_iam_role_policy" "milpa" {
-  name = "milpa"
+  name = "${var.namespace}-${var.stage}-milpa"
   role = "${aws_iam_role.milpa.id}"
   policy = <<EOF
 {
@@ -210,7 +210,7 @@ EOF
 }
 
 resource  "aws_iam_instance_profile" "milpa" {
-  name = "milpa"
+  name = "${var.namespace}-${var.stage}-milpa"
   role = "${aws_iam_role.milpa.name}"
 }
 
@@ -242,6 +242,6 @@ resource "aws_instance" "milpa-server" {
   depends_on = ["aws_internet_gateway.gw"]
 
   tags {
-      Name = "milpa-server"
+      Name = "${var.namespace}-${var.stage}-milpa-server"
   }
 }

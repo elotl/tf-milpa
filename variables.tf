@@ -1,5 +1,13 @@
 variable "ssh-key-name" {}
 
+variable "namespace" {
+    default = "vilmos"
+}
+
+variable "stage" {
+    default = "dev"
+}
+
 variable "cluster-name" {}
 
 variable "aws-access-key-id" {
