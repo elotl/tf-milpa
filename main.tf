@@ -16,6 +16,10 @@ resource "aws_vpc" "main" {
         when    = "destroy"
         command = "./cleanup-vpc.sh ${self.id} ${var.cluster-name}"
         interpreter = ["/bin/bash", "-c"]
+        environment = {
+          AWS_REGION = "${var.region}"
+          AWS_DEFAULT_REGION = "${var.region}"
+        }
     }
 }
 
@@ -32,6 +36,10 @@ resource "aws_internet_gateway" "gw" {
         when    = "destroy"
         command = "./cleanup-vpc.sh ${self.vpc_id} ${var.cluster-name}"
         interpreter = ["/bin/bash", "-c"]
+        environment = {
+          AWS_REGION = "${var.region}"
+          AWS_DEFAULT_REGION = "${var.region}"
+        }
     }
 }
 
