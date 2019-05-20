@@ -3,7 +3,7 @@ provider "aws" {
 }
 
 data "http" "my-ip-address" {
-   url = "http://icanhazip.com"
+   url = "http://ipv4.icanhazip.com"
 }
 
 locals {
