@@ -16,12 +16,6 @@ resource "aws_vpc" "main" {
         when    = "destroy"
         command = "./cleanup-vpc.sh ${self.id} ${var.cluster-name}"
         interpreter = ["/bin/bash", "-c"]
-        environment = {
-            AWS_ACCESS_KEY_ID = "${var.aws-access-key-id}"
-            AWS_SECRET_ACCESS_KEY = "${var.aws-secret-access-key}"
-            AWS_REGION = "${var.region}"
-            AWS_DEFAULT_REGION = "${var.region}"
-        }
     }
 }
 
@@ -38,12 +32,6 @@ resource "aws_internet_gateway" "gw" {
         when    = "destroy"
         command = "./cleanup-vpc.sh ${self.vpc_id} ${var.cluster-name}"
         interpreter = ["/bin/bash", "-c"]
-        environment = {
-            AWS_ACCESS_KEY_ID = "${var.aws-access-key-id}"
-            AWS_SECRET_ACCESS_KEY = "${var.aws-secret-access-key}"
-            AWS_REGION = "${var.region}"
-            AWS_DEFAULT_REGION = "${var.region}"
-        }
     }
 }
 
@@ -109,6 +97,115 @@ resource "aws_security_group" "milpa-server" {
   }
 }
 
+resource "aws_iam_role" "milpa" {
+  name = "milpa"
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "ec2.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy" "milpa" {
+  name = "milpa"
+  role = "${aws_iam_role.milpa.id}"
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ec2",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:AuthorizeSecurityGroupIngress",
+        "ec2:CreateRoute",
+        "ec2:CreateSecurityGroup",
+        "ec2:CreateTags",
+        "ec2:CreateVolume",
+        "ec2:DeleteRoute",
+        "ec2:DeleteSecurityGroup",
+        "ec2:DescribeAddresses",
+        "ec2:DescribeElasticGpus",
+        "ec2:DescribeImages",
+        "ec2:DescribeInstances",
+        "ec2:DescribeRouteTables",
+        "ec2:DescribeSecurityGroups",
+        "ec2:DescribeSpotPriceHistory",
+        "ec2:DescribeSubnets",
+        "ec2:DescribeTags",
+        "ec2:DescribeVolumes",
+        "ec2:DescribeVpcAttribute",
+        "ec2:DescribeVpcs",
+        "ec2:ModifyInstanceAttribute",
+        "ec2:ModifyInstanceCreditSpecification",
+        "ec2:ModifyVolume",
+        "ec2:ModifyVpcAttribute",
+        "ec2:RequestSpotInstances",
+        "ec2:RevokeSecurityGroupIngress",
+        "ec2:RunInstances",
+        "ec2:TerminateInstances",
+        "ecr:BatchGetImage",
+        "ecr:GetAuthorizationToken",
+        "ecr:GetDownloadUrlForLayer",
+        "elasticloadbalancing:DescribeLoadBalancerAttributes",
+        "elasticloadbalancing:DescribeLoadBalancers",
+        "elasticloadbalancing:DescribeTags",
+        "route53:ChangeResourceRecordSets",
+        "route53:CreateHostedZone",
+        "route53:GetChange",
+        "route53:ListHostedZonesByName",
+        "route53:ListResourceRecordSets"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "dynamo",
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:CreateTable",
+        "dynamodb:PutItem",
+        "dynamodb:DescribeTable",
+        "dynamodb:GetItem"
+      ],
+      "Resource": "arn:aws:dynamodb:*:*:table/MilpaClusters"
+    },
+    {
+      "Sid": "elb",
+      "Effect": "Allow",
+      "Action": [
+        "elasticloadbalancing:DeleteLoadBalancer",
+        "elasticloadbalancing:RemoveTags",
+        "elasticloadbalancing:CreateLoadBalancer",
+        "elasticloadbalancing:ConfigureHealthCheck",
+        "elasticloadbalancing:AddTags",
+        "elasticloadbalancing:ApplySecurityGroupsToLoadBalancer",
+        "elasticloadbalancing:DeleteLoadBalancerListeners",
+        "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
+        "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+        "elasticloadbalancing:ModifyLoadBalancerAttributes",
+        "elasticloadbalancing:CreateLoadBalancerListeners"
+      ],
+      "Resource": "arn:aws:elasticloadbalancing:*:*:loadbalancer/milpa-*"
+    }
+  ]
+}
+EOF
+}
+
+resource  "aws_iam_instance_profile" "milpa" {
+  name = "milpa"
+  role = "${aws_iam_role.milpa.name}"
+}
+
 data "template_file" "milpa-userdata" {
     template = "${file("${var.userdata}")}"
 
@@ -132,6 +229,7 @@ resource "aws_instance" "milpa-server" {
   key_name = "${var.ssh-key-name}"
   associate_public_ip_address = true
   vpc_security_group_ids = ["${aws_security_group.milpa-server.id}"]
+  iam_instance_profile = "${aws_iam_instance_profile.milpa.id}"
 
   depends_on = ["aws_internet_gateway.gw"]
 

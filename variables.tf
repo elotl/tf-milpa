@@ -2,9 +2,13 @@ variable "ssh-key-name" {}
 
 variable "cluster-name" {}
 
-variable "aws-access-key-id" {}
+variable "aws-access-key-id" {
+    default = ""
+}
 
-variable "aws-secret-access-key" {}
+variable "aws-secret-access-key" {
+    default = ""
+}
 
 variable "license-key" {}
 
