@@ -8,6 +8,8 @@ data "http" "my-ip-address" {
 
 locals {
   my-cidr = "${chomp(data.http.my-ip-address.body)}/32"
+  suffix = "${substr(aws_vpc.main.id, 4, 5)}"
+  long-cluster-name = "${var.cluster-name}-${local.suffix}"
 }
 
 resource "aws_vpc" "main" {
@@ -22,7 +24,7 @@ resource "aws_vpc" "main" {
         # Remove any leftover instance, security group etc Milpa created. They
         # would prevent terraform from destroying the VPC.
         when    = "destroy"
-        command = "./cleanup-vpc.sh ${self.id} ${var.cluster-name}"
+        command = "./cleanup-vpc.sh ${self.id} ${local.long-cluster-name}"
         interpreter = ["/bin/bash", "-c"]
         environment = {
           AWS_REGION = "${var.region}"
@@ -42,7 +44,7 @@ resource "aws_internet_gateway" "gw" {
         # Remove any leftover instance, security group etc Milpa created. They
         # would prevent terraform from destroying the VPC.
         when    = "destroy"
-        command = "./cleanup-vpc.sh ${self.vpc_id} ${var.cluster-name}"
+        command = "./cleanup-vpc.sh ${self.vpc_id} ${local.long-cluster-name}"
         interpreter = ["/bin/bash", "-c"]
         environment = {
           AWS_REGION = "${var.region}"
@@ -226,7 +228,7 @@ data "template_file" "milpa-userdata" {
     template = "${file("${var.userdata}")}"
 
     vars {
-        cluster_name = "${var.cluster-name}"
+        cluster_name = "${local.long-cluster-name}"
         aws_access_key_id = "${var.aws-access-key-id}"
         aws_secret_access_key = "${var.aws-secret-access-key}"
         ssh_key_name = "${var.ssh-key-name}"
