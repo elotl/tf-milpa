@@ -10,6 +10,10 @@ variable "stage" {
 
 variable "cluster-name" {}
 
+variable "aws-ami-id" {
+    default = "ami-028d6461780695a43"
+}
+
 variable "aws-access-key-id" {
     default = ""
 }

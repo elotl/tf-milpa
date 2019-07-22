@@ -16,7 +16,7 @@ resource "aws_vpc" "main" {
     cidr_block = "10.0.0.0/16"
     enable_dns_hostnames = true
 
-    tags {
+    tags = {
         Name = "${var.namespace}-${var.stage}-milpa-vpc"
     }
 
@@ -36,7 +36,7 @@ resource "aws_vpc" "main" {
 resource "aws_internet_gateway" "gw" {
     vpc_id = "${aws_vpc.main.id}"
 
-    tags {
+    tags = {
         Name = "${var.namespace}-${var.stage}-milpa-gw"
     }
 
@@ -62,7 +62,7 @@ resource "aws_route_table" "route-table" {
 
     depends_on = ["aws_internet_gateway.gw"]
 
-    tags {
+    tags = {
         Name = "${var.namespace}-${var.stage}-milpa-route-table"
     }
 }
@@ -78,7 +78,7 @@ resource "aws_subnet" "public" {
     availability_zone = "us-east-1c"
     map_public_ip_on_launch = true
 
-    tags {
+    tags = {
         Name = "${var.namespace}-${var.stage}-milpa-subnet"
     }
 }
@@ -110,7 +110,7 @@ resource "aws_security_group" "milpa-server" {
       cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags {
+  tags = {
     Name = "${var.namespace}-${var.stage}-milpa-server"
   }
 }
@@ -227,7 +227,7 @@ resource  "aws_iam_instance_profile" "milpa" {
 data "template_file" "milpa-userdata" {
     template = "${file("${var.userdata}")}"
 
-    vars {
+    vars = {
         cluster_name = "${local.long-cluster-name}"
         aws_access_key_id = "${var.aws-access-key-id}"
         aws_secret_access_key = "${var.aws-secret-access-key}"
@@ -240,7 +240,7 @@ data "template_file" "milpa-userdata" {
 }
 
 resource "aws_instance" "milpa-server" {
-  ami           = "ami-028d6461780695a43"
+  ami           = "${var.aws-ami-id}"
   instance_type = "t3.small"
   subnet_id = "${aws_subnet.public.id}"
   user_data = "${data.template_file.milpa-userdata.rendered}"
@@ -251,7 +251,7 @@ resource "aws_instance" "milpa-server" {
 
   depends_on = ["aws_internet_gateway.gw"]
 
-  tags {
+  tags = {
       Name = "${var.namespace}-${var.stage}-milpa-server"
   }
 }
